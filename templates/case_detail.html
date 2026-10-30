@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ case.id }} | Nyaya Pravah{% endblock %}
+{% block content %}
+<div class="record-card">
+    <div class="record-header">
+        <h3>Case Summary: {{ case.title }}</h3>
+        <span class="badge"><i class="fa-solid fa-gavel"></i> {{ case.current_stage }}</span>
+    </div>
+
+    <div class="stepper" aria-label="Case progress">
+        {% for step_name in steps %}
+            {% set n = loop.index %}
+            <div class="step {% if case.stage_step >= n %}done{% endif %} {% if case.stage_step == n %}current{% endif %}">
+                <div class="step-dot">{{ n }}</div>
+                <div class="step-label">{{ step_name }}</div>
+            </div>
+            {% if not loop.last %}
+                <div class="step-line {% if case.stage_step > n %}done{% endif %}"></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% set tone = 'ok' %}
+    {% if 'High' in case.delay_status %}
+        {% set tone = 'danger' %}
+    {% elif 'Moderate' in case.delay_status or 'Watch' in case.delay_status %}
+        {% set tone = 'warn' %}
+    {% endif %}
+    <div class="explainer explainer-{{ tone }}">
+        <div class="explainer-head">
+            <strong><i class="fa-solid fa-language"></i> Plain-language status</strong>
+            <span class="delay-chip delay-{{ tone }}">{{ case.delay_status }}</span>
+        </div>
+        <p>{{ case.plain_explanation }}</p>
+        {% if insight %}
+            <p class="explainer-reason">{{ insight.delay_reason }}</p>
+        {% endif %}
+    </div>
+
+    <div class="grid-data">
+        <div class="data-item"><span>Tracking ID / CNR</span>{{ case.id }}</div>
+        <div class="data-item"><span>Case Type</span>{{ case.case_type }}</div>
+        <div class="data-item"><span>Filing Date</span>{{ case.filing_date }}</div>
+        <div class="data-item"><span>Current Stage</span>{{ case.current_stage }}</div>
+        <div class="data-item"><span>Next Scheduled Hearing</span><strong>{{ case.next_hearing_date or '—' }}</strong></div>
+        <div class="data-item"><span>Bench / Presiding Officer</span>{{ case.judge_name or '—' }}</div>
+        <div class="data-item"><span>Jurisdiction &amp; Court</span>{{ case.court_hall or '—' }}</div>
+        <div class="data-item"><span>Adjournments</span>{{ case.adjournments_count }}</div>
+        <div class="data-item"><span>Petitioner</span>{{ case.petitioner or '—' }}</div>
+        <div class="data-item"><span>Respondent</span>{{ case.respondent or '—' }}</div>
+    </div>
+
+    <div class="adjourn-bar">
+        <form method="POST" action="{{ url_for('adjourn_case', case_id=case.id) }}" class="form-row">
+            <input type="text" name="next_hearing_date" placeholder="Optional next hearing date (e.g. 20 Sep 2026)">
+            <button type="submit"><i class="fa-solid fa-calendar-xmark"></i> Log adjournment</button>
+        </form>
+    </div>
+</div>
+
+<div class="record-card history-card">
+    <div class="record-header">
+        <h3><i class="fa-solid fa-clock-rotate-left"></i> Case history</h3>
+    </div>
+    <ul class="timeline">
+        {% for event in events %}
+            <li>
+                <div class="timeline-meta">
+                    <strong>{{ event.event_type }}</strong>
+                    <span>{{ event.created_at.strftime('%d %b %Y, %H:%M') if event.created_at else '' }}</span>
+                </div>
+                <p>{{ event.note }}</p>
+            </li>
+        {% else %}
+            <li>No procedural history recorded yet.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

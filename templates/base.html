@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nyaya Pravah | National Judicial Workflow & Case Tracking Portal{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="flag-strip"></div>
+
+    <header class="gov-header">
+        <div class="emblem-section">
+            <img class="emblem-img" src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem of India">
+            <div class="portal-titles">
+                <h1>न्याय प्रवाह • Nyaya Pravah</h1>
+                <p>National Judicial Workflow &amp; Procedural Tracking Platform</p>
+            </div>
+        </div>
+        <div class="portal-tag">
+            <i class="fa-solid fa-scale-balanced"></i> Integrated e-Courts Registry
+        </div>
+    </header>
+
+    <div class="sub-bar">
+        <div>
+            <a href="{{ url_for('home') }}" class="{% if active == 'home' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i> Home
+            </a>
+            <a href="{{ url_for('home') }}#track" class="{% if active == 'search' %}active{% endif %}">
+                <i class="fa-solid fa-magnifying-glass"></i> Search Cases
+            </a>
+            <a href="{{ url_for('cause_list') }}" class="{% if active == 'cause-list' %}active{% endif %}">
+                <i class="fa-solid fa-gavel"></i> Cause List
+            </a>
+            <a href="{{ url_for('list_cases') }}" class="{% if active == 'cases' %}active{% endif %}">
+                <i class="fa-solid fa-table"></i> All Cases
+            </a>
+            <a href="{{ url_for('new_case') }}" class="{% if active == 'new' %}active{% endif %}">
+                <i class="fa-solid fa-file-circle-plus"></i> Register Case
+            </a>
+        </div>
+        <div>
+            <span>Official Government Demonstration Portal</span>
+        </div>
+    </div>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">
+                        <i class="fa-solid {% if category == 'error' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

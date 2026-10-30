@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- Latest Announcements & Circulars Section -->
+<div class="announcements-section">
+    <div class="announcements-header">
+        <span class="updates-badge">
+            <i class="fa-solid fa-bell"></i> Updates:
+        </span>
+        <h2>Latest Announcements &amp; Circulars</h2>
+    </div>
+    <div class="announcements-container">
+        <div class="announcements-ticker">
+            {% for news in latest_news %}
+            <div class="announcement-item">
+                <a href="{{ news.link }}" target="_blank" rel="noopener noreferrer" class="announcement-link">
+                    <span class="new-badge">NEW</span>
+                    <span class="announcement-text">{{ news.title }}</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="metrics-row">
+    <div class="metric-card">
+        <h3>{{ metrics.total_cases }}</h3>
+        <p>Active tracked cases</p>
+    </div>
+    <div class="metric-card">
+        <h3>{{ metrics.avg_adjournments }}</h3>
+        <p>Average adjournments</p>
+    </div>
+    <div class="metric-card metric-warn">
+        <h3>{{ metrics.high_delay }}</h3>
+        <p>High delay risk flags</p>
+    </div>
+    <div class="metric-card">
+        <h3>{{ metrics.watch_delay }}</h3>
+        <p>Moderate delay watch</p>
+    </div>
+    <div class="metric-card" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-left: 4px solid #0284c7;">
+        <h3 style="color: #0c4a6e;">{{ metrics.vulnerable_litigants }}</h3>
+        <p>Vulnerable litigants</p>
+    </div>
+    <div class="metric-card" style="background: linear-gradient(135deg, #fff8f0 0%, #fed7aa 100%); border-left: 4px solid #ff8c00;">
+        <h3 style="color: #b45309;">{{ metrics.rollover_protected }}</h3>
+        <p>Rollover priority cases</p>
+    </div>
+</div>
+
+<div class="search-panel" id="track">
+    <h2><i class="fa-solid fa-file-contract"></i> Track Judicial Record</h2>
+    <form method="POST" action="{{ url_for('track') }}">
+        <div class="form-row">
+            <input type="text" name="case_id" placeholder="Enter CNR or Case ID (e.g. NP-2026-101)" required>
+            <button type="submit"><i class="fa-solid fa-search"></i> Search Record</button>
+        </div>
+    </form>
+</div>
+
+{% if searched and not case %}
+    <div class="not-found">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        No judicial record found matching the specified Case Tracking ID. Please verify the registration number.
+    </div>
+{% endif %}
+{% endblock %}

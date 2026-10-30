@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Active Cases | Nyaya Pravah{% endblock %}
+{% block content %}
+<div class="search-panel">
+    <h2><i class="fa-solid fa-filter"></i> Filter cause list</h2>
+    <form method="GET" action="{{ url_for('list_cases') }}" class="filter-grid">
+        <label>
+            By Stage
+            <select name="stage">
+                <option value="">All stages</option>
+                {% for step in steps %}
+                    <option value="{{ step }}" {% if filters.stage == step %}selected{% endif %}>{{ step }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            By Court
+            <select name="court">
+                <option value="">All courts</option>
+                {% for hall in courts %}
+                    <option value="{{ hall }}" {% if filters.court == hall %}selected{% endif %}>{{ hall }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            By Delay Warning
+            <select name="delay">
+                <option value="">All statuses</option>
+                <option value="On Track" {% if filters.delay == 'On Track' %}selected{% endif %}>On Track</option>
+                <option value="Moderate" {% if filters.delay == 'Moderate' %}selected{% endif %}>Watch — Moderate Delay</option>
+                <option value="High Delay Risk" {% if filters.delay == 'High Delay Risk' %}selected{% endif %}>High Delay Risk</option>
+            </select>
+        </label>
+        <div class="filter-actions">
+            <button type="submit"><i class="fa-solid fa-filter"></i> Apply</button>
+            <a class="btn-secondary" href="{{ url_for('list_cases') }}">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div class="table-wrap">
+    <table class="cases-table">
+        <thead>
+            <tr>
+                <th>CNR / ID</th>
+                <th>Title</th>
+                <th>Stage</th>
+                <th>Court</th>
+                <th>Adjournments</th>
+                <th>Delay</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for case in cases %}
+            <tr>
+                <td><a href="{{ url_for('track', case_id=case.id) }}">{{ case.id }}</a></td>
+                <td>{{ case.title }}</td>
+                <td>{{ case.current_stage }}</td>
+                <td>{{ case.court_hall }}</td>
+                <td>{{ case.adjournments_count }}</td>
+                <td>
+                    {% set tone = 'ok' %}
+                    {% if 'High' in case.delay_status %}{% set tone = 'danger' %}
+                    {% elif 'Moderate' in case.delay_status or 'Watch' in case.delay_status %}{% set tone = 'warn' %}{% endif %}
+                    <span class="delay-chip delay-{{ tone }}">{{ case.delay_status }}</span>
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('adjourn_case', case_id=case.id) }}">
+                        <button type="submit" class="btn-small">Adjourn</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">No records match the selected filters.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

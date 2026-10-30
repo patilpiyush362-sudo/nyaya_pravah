@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Register Case | Nyaya Pravah{% endblock %}
+{% block content %}
+<div class="search-panel">
+    <h2><i class="fa-solid fa-file-circle-plus"></i> Submit a new legal case</h2>
+    <p class="form-hint">Fields map to the public registry. Plain-language explanation and delay risk are calculated automatically.</p>
+    <form method="POST" action="{{ url_for('create_case') }}" class="case-form">
+        <div class="grid-form">
+            <label>Tracking ID (optional)
+                <input type="text" name="id" value="{{ suggested_id }}" placeholder="NP-2026-107">
+            </label>
+            <label>Case type
+                <input type="text" name="case_type" placeholder="Civil, Criminal, Writ" required>
+            </label>
+            <label class="span-2">Title / cause title
+                <input type="text" name="title" placeholder="Party A vs. Party B" required>
+            </label>
+            <label>Filing date
+                <input type="text" name="filing_date" placeholder="30 Aug 2026">
+            </label>
+            <label>Current stage
+                <select name="current_stage">
+                    {% for step in steps %}
+                        <option value="{{ step }}">{{ step }}</option>
+                    {% endfor %}
+                    <option value="Notice under Order V CPC">Notice under Order V CPC</option>
+                    <option value="Framing of Issues">Framing of Issues</option>
+                    <option value="Arguments & Evidence">Arguments &amp; Evidence</option>
+                </select>
+            </label>
+            <label>Stage step (1–4)
+                <input type="number" name="stage_step" min="1" max="4" placeholder="Leave blank to auto-map">
+            </label>
+            <label>Next hearing date
+                <input type="text" name="next_hearing_date" placeholder="12 Sep 2026">
+            </label>
+            <label class="span-2">Court hall
+                <input type="text" name="court_hall" placeholder="Court Hall No. 4, Bombay High Court">
+            </label>
+            <label>Judge / bench
+                <input type="text" name="judge_name">
+            </label>
+            <label>Petitioner
+                <input type="text" name="petitioner">
+            </label>
+            <label>Respondent
+                <input type="text" name="respondent">
+            </label>
+            <label>Adjournments already on record
+                <input type="number" name="adjournments_count" min="0" value="0">
+            </label>
+        </div>
+        <div class="form-row">
+            <button type="submit"><i class="fa-solid fa-floppy-disk"></i> Register case</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+{% block title %}Daily Cause List | Nyaya Pravah{% endblock %}
+{% block content %}
+
+<div class="search-panel">
+    <h2><i class="fa-solid fa-gavel"></i> Daily Cause List (Hearing Board)</h2>
+    <form method="GET" action="{{ url_for('cause_list') }}" class="filter-grid">
+        <label>
+            Select Court
+            <select name="court" onchange="this.form.submit()">
+                <option value="">-- Choose a court --</option>
+                {% for court in all_courts %}
+                    <option value="{{ court }}" {% if selected_court == court %}selected{% endif %}>{{ court }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </form>
+</div>
+
+{% if cause_data and scheduled_cases %}
+
+<div class="cause-list-header">
+    <div class="court-info">
+        <h3>{{ selected_court }}</h3>
+        <div class="capacity-badge">
+            <i class="fa-solid fa-users"></i> Today's Capacity: <strong>{{ cause_data.today_capacity }} cases</strong>
+        </div>
+    </div>
+    <div class="cause-stats">
+        <div class="stat">
+            <span class="stat-label">Total Pending:</span>
+            <span class="stat-value">{{ cause_data.total_pending }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Rollover Protected:</span>
+            <span class="stat-value" style="color: #ff8c00;">{{ cause_data.rollover_count }}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Scheduled Today:</span>
+            <span class="stat-value">{{ cause_data.scheduled_cases|length }}/{{ cause_data.today_capacity }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table class="cause-list-table">
+        <thead>
+            <tr>
+                <th class="rank-col">Rank</th>
+                <th>Case ID</th>
+                <th>Petitioner vs. Respondent</th>
+                <th>Priority Score</th>
+                <th>Litigant Status</th>
+                <th>Badge</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for case in scheduled_cases %}
+            <tr class="{% if case.is_rollover_bumped %}row-rollover{% endif %}">
+                <td class="rank-col">
+                    <div class="rank-badge">{{ case.scheduled_queue_number }}</div>
+                </td>
+                <td>
+                    <a href="{{ url_for('track', case_id=case.id) }}" class="case-link">{{ case.id }}</a>
+                </td>
+                <td>
+                    <strong>{{ case.title }}</strong>
+                    <br>
+                    <small>
+                        {% if case.petitioner %}{{ case.petitioner }}{% endif %}
+                        {% if case.petitioner and case.respondent %}<br>vs.{% endif %}
+                        {% if case.respondent %}{{ case.respondent }}{% endif %}
+                    </small>
+                </td>
+                <td>
+                    <div class="score-display">{{ "%.1f"|format(case.priority_score) }}</div>
+                </td>
+                <td>
+                    <div class="litigant-info">
+                        {% if case.client_age >= 60 %}
+                            <span class="info-tag age">Age {{ case.client_age }}</span>
+                        {% endif %}
+                        {% if not case.has_property %}
+                            <span class="info-tag landless">Landless</span>
+                        {% endif %}
+                        {% if case.client_working_years_left <= 3 %}
+                            <span class="info-tag service">{{ case.client_working_years_left }} yr left</span>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>
+                    <div class="badge-container">
+                        {% if case.is_rollover_bumped %}
+                            <div class="badge badge-rollover" title="Rollover Priority: This case was listed at position {{ case.previous_queue_number }} but the judge's board ended at position {{ case.previous_board_limit }}, meaning the hearing was not completed. Judicial fairness ensures it receives priority in today's list.">
+                                <i class="fa-solid fa-arrow-up"></i> Rollover Priority
+                            </div>
+                        {% endif %}
+                        {% if case.client_age >= 60 or not case.has_property or case.client_working_years_left <= 3 %}
+                            <div class="badge badge-vulnerable" title="Vulnerable Litigant: Senior citizen, landless/assetless, or limited working years remaining.">
+                                <i class="fa-solid fa-heart"></i> Vulnerable
+                            </div>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="legend-section">
+    <h4><i class="fa-solid fa-circle-info"></i> Legend</h4>
+    <div class="legend-items">
+        <div class="legend-item">
+            <div class="badge badge-rollover" style="margin-bottom: 0;">Rollover Priority</div>
+            <p>Case was listed in a previous hearing but the judge's board ended before this case was heard. Receives priority placement at the top of today's hearing board to ensure judicial fairness.</p>
+        </div>
+        <div class="legend-item">
+            <div class="badge badge-vulnerable" style="margin-bottom: 0;">Vulnerable Litigant</div>
+            <p>Case involves senior citizens (age ≥ 60), landless/assetless litigants, or individuals with limited working years remaining (≤ 3 years). Given priority consideration.</p>
+        </div>
+        <div class="legend-item">
+            <p><strong>Priority Score:</strong> Calculated based on case duration (years pending), litigant age, property status, and working years remaining. Higher scores = higher priority for hearing.</p>
+        </div>
+    </div>
+</div>
+
+{% elif selected_court %}
+
+<div class="not-found">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    No pending cases found for <strong>{{ selected_court }}</strong>. The court's docket is clear or cases are closed.
+</div>
+
+{% else %}
+
+<div class="info-panel">
+    <i class="fa-solid fa-info-circle"></i>
+    <p>Select a court from the dropdown to view today's prioritized hearing board. The cause list shows cases in judicial priority order, with rollover protection and vulnerable litigant protections applied.</p>
+</div>
+
+{% endif %}
+
+<style>
+.cause-list-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 8px;
+    border-left: 4px solid #1e40af;
+}
+
+.court-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+}
+
+.capacity-badge {
+    display: inline-block;
+    background: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    color: #1e40af;
+    border: 1px solid #1e40af;
+}
+
+.cause-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #1e40af;
+}
+
+.cause-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cause-list-table thead {
+    background: #1e40af;
+    color: white;
+    font-weight: 600;
+}
+
+.cause-list-table th, .cause-list-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.rank-col {
+    width: 80px;
+    text-align: center;
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #1e40af;
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.row-rollover {
+    background-color: #fff8f0;
+    border-left: 4px solid #ff8c00;
+}
+
+.score-display {
+    background: #f0f4ff;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    font-weight: 600;
+    color: #1e40af;
+    text-align: center;
+}
+
+.litigant-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.info-tag {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.info-tag.age {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.info-tag.landless {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.info-tag.service {
+    background: #fce7f3;
+    color: #be123c;
+}
+
+.badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-rollover {
+    background: #fff8f0;
+    color: #ff8c00;
+    border: 1px solid #ff8c00;
+}
+
+.badge-vulnerable {
+    background: #eef2ff;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+}
+
+.legend-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.legend-section h4 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+    color: #1e40af;
+}
+
+.legend-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.legend-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #e5e7eb;
+}
+
+.legend-item p {
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.info-panel {
+    padding: 2rem;
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    border-radius: 6px;
+    color: #1e40af;
+    font-size: 1.05rem;
+}
+
+.info-panel i {
+    margin-right: 0.5rem;
+}
+
+.case-link {
+    color: #1e40af;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.case-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+    .cause-list-header {
+        grid-template-columns: 1fr;
+    }
+    
+    .cause-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .cause-list-table th, .cause-list-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+{% endblock %}
